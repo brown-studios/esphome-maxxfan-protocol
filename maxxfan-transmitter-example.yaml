@@ -1,0 +1,146 @@
+# MAXXFAN TRANSMITTER EXAMPLE
+#
+# Please modify this configuration to suit your needs.
+esphome:
+  name: maxxfan-transmitter-example
+  friendly_name: Maxxfan Transmitter Example
+
+esp32:
+  board: lolin_s2_mini  # Change this for the board you are using
+  framework:
+    type: arduino
+
+logger:
+
+# Set up a WiFi access point and web server for this example.
+# After connecting to the access point, open http://192.168.4.1/ in a web browser
+# to access the user interface.
+wifi:
+  ap:
+    ssid: "maxxfan-transmitter-example"
+    password: "JustForTesting"
+    ap_timeout: 1s
+  power_save_mode: light
+web_server:
+  local: true
+  log: false
+  ota: false
+  version: 2
+
+# Import the maxxfan protocol component.
+external_components:
+  # Import the component from Github.
+  # - source: github://j9brown/esphome-maxxfan-protocol@main
+  #   components: [ maxxfan_protocol ]
+  # Import the component from a local directory.
+  - source: components
+
+# Enable the Maxxfan protocol.
+maxxfan_protocol:
+
+# Configure the IR transmitter.
+remote_transmitter:
+  - id: ir_transmitter
+    pin:
+      number: 17  # Change this to the pin your IR transmitter is attached to
+      inverted: false
+    carrier_duty_percent: 50%
+
+# Emulate the Maxxfan remote control with entities that transmit state updates to the fan.
+fan:
+  - id: maxxfan
+    name: "Fan"
+    platform: template
+    has_direction: true
+    speed_count: 10
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+      then:
+        - cover.open: maxxfan_cover
+    on_turn_off:
+      then:
+        - cover.close: maxxfan_cover
+    on_state:
+      then:
+        - script.execute: transmit_maxxfan_state
+cover:
+  - id: maxxfan_cover
+    name: "Cover"
+    platform: template
+    optimistic: true
+    assumed_state: true
+    restore_mode: NO_RESTORE
+    toggle_action:
+      then:
+        - lambda: |-
+            id(maxxfan_cover).position = (id(maxxfan_cover).position == COVER_CLOSED) ? COVER_OPEN : COVER_CLOSED;
+        - script.execute: transmit_maxxfan_state
+    on_open:
+      then:
+        - script.execute: transmit_maxxfan_state
+    on_closed:
+      then:
+        - script.execute: transmit_maxxfan_state
+select:
+  - id: maxxfan_mode
+    name: "Mode"
+    platform: template
+    optimistic: true
+    restore_value: false
+    options:
+      - Manual
+      - Auto
+    on_value:
+      then:
+        - script.execute: transmit_maxxfan_state
+number:
+  - id: maxxfan_auto_temperature
+    name: "Auto Temperature"
+    platform: template
+    unit_of_measurement: °F  # Maxxfan internally uses Fahrenheit
+    min_value: 29
+    max_value: 99
+    step: 1
+    mode: slider
+    optimistic: true
+    initial_value: 78
+    restore_value: false
+    on_value:
+      then:
+        - script.execute: transmit_maxxfan_state
+button:
+  - id: maxxfan_retransmit
+    name: "Retransmit"
+    platform: template
+    on_press:
+      - then:
+        - script.execute: transmit_maxxfan_state
+  - id: maxxfan_warn
+    name: "Beep!"
+    platform: template
+    on_press:
+      - then:
+        - script.execute:
+            id: transmit_maxxfan_state_maybe_warn
+            warn: true
+script:
+  - id: transmit_maxxfan_state
+    then:
+        - script.execute:
+            id: transmit_maxxfan_state_maybe_warn
+            warn: false
+  - id: transmit_maxxfan_state_maybe_warn
+    parameters:
+      warn: bool
+    then:
+        - logger.log: "Transmitting message to Maxxfan"
+        - remote_transmitter.transmit_maxxfan:
+            transmitter_id: ir_transmitter
+            fan_on: !lambda return id(maxxfan).state;
+            fan_exhaust: !lambda return id(maxxfan).direction == FanDirection::REVERSE;
+            fan_speed: !lambda return id(maxxfan).speed * 10;
+            cover_open: !lambda return id(maxxfan_cover).position == COVER_OPEN;
+            auto_mode: !lambda return id(maxxfan_mode).active_index() == 1;
+            auto_temperature: !lambda return id(maxxfan_auto_temperature).state;
+            special: !lambda return id(maxxfan_mode).active_index() == 1 || (id(maxxfan).state && id(maxxfan_cover).position == COVER_CLOSED);
+            warn: !lambda return warn;

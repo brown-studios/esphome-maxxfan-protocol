@@ -1,0 +1,38 @@
+# MAXXFAN RECEIVER EXAMPLE
+#
+# Please modify this configuration to suit your needs.
+esphome:
+  name: maxxfan-receiver-example
+  friendly_name: Maxxfan Receiver Example
+
+esp32:
+  board: esp32-c3-devkitm-1  # Change this for the board you are using
+  framework:
+    type: arduino
+
+logger:
+
+# Import the maxxfan protocol component.
+external_components:
+  # Import the component from Github.
+  # - source: github://j9brown/esphome-maxxfan-protocol@main
+  #   components: [ maxxfan_protocol ]
+  # Import the component from a local directory.
+  - source: components
+
+# Enable the Maxxfan protocol.
+maxxfan_protocol:
+
+# Configure the IR receiver.
+remote_receiver:
+  - id: ir_receiver
+    pin:
+      number: 2  # Change this to the pin your IR receiver is attached to
+      mode: input
+      inverted: true
+    dump: maxxfan
+    on_maxxfan:
+      then:
+        lambda: |-
+          // The variable 'x' holds a MaxxfanData object parsed from the received message
+          ESP_LOGD("maxxfan-example", "Fan state: %s", x.fan_on ? "on" : "off");

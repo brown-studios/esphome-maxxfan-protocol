@@ -34,8 +34,6 @@ remote_receiver:
       number: 2  # Change this to the pin your IR receiver is attached to
       mode: input
       inverted: true
-    rmt_channel: 2
-    memory_blocks: 2
     dump: maxxfan
     on_maxxfan:
       then:
@@ -44,11 +42,13 @@ remote_receiver:
           ESP_LOGD("maxxfan-example", "Fan state: %s", x.fan_on ? "on" : "off");
 ```
 
+See [maxxfan-receiver-example.yaml](maxxfan-receiver-example.yaml) for a complete example that dumps all received Maxxfan IR messages.
+
 ### Transmitting Maxxfan remote control messages
 
 *Note: The transmitter implementation is currently a work in progress and needs further testing.*
 
-The `remote_transmitter.transmit_maxxfan` action transmits a message to the fan and sets all parameters at once.  Any parameters you don't specify in the action will be set to their default values.  All parameters are templatable.
+The `remote_transmitter.transmit_maxxfan` action transmits a message to the fan and sets all parameters at once.  Any parameters that you don't specify in the action will be set to their default values.  All parameters are templatable.
 
 | Parameter        | Value                                                                         | Default |
 | ---------------- | ----------------------------------------------------------------------------- | ------- |
@@ -61,7 +61,7 @@ The `remote_transmitter.transmit_maxxfan` action transmits a message to the fan 
 | special          | Special modes: see [protocol details](#protocol-details)                      | `false` |
 | warn             | Emit warning tone: `true` to beep twice, `false` to not beep                  | `false` |
 
-Here's what you need to add to your ESPHome configuration to transmit Maxxfan messages, assuming you have connected an infrared LED to pin 10.
+Here's what you need to add to your ESPHome configuration to transmit Maxxfan messages, assuming you have connected an infrared LED to pin 10 (with a suitable current limiting resistor).
 
 ```yaml
 # Configure the IR transmitter.
@@ -72,33 +72,24 @@ remote_transmitter:
       inverted: false
     carrier_duty_percent: 50%
 
-# When a button is pressed, transmit a message to turn the fan on low speed in exhaust mode.
-# Note that each message sets all of the fan's parameters at once.  Any parameters you don't specify
-# in the action will be set to their default values.
-binary_sensor:
-  - platform: gpio
-    id: example_button
-    pin:
-      number: 9  # Change this to the pin of a button on your board
-      inverted: true
-    on_click:
-      then:
-        - logger.log: "Transmitting message to Maxxfan"
-        - remote_transmitter.transmit_maxxfan:
-            transmitter_id: ir_transmitter
-            fan_on: true
-            fan_exhaust: true
-            fan_speed: 10
-            cover_open: true
-            auto_mode: false
-            #auto_temperature:
-            #special:
-            #warn:
+# Turn the fan on high when the script is invoked.
+script:
+  - id: fan_high
+    then:
+      - logger.log: "Transmitting message to Maxxfan"
+      - remote_transmitter.transmit_maxxfan:
+          transmitter_id: ir_transmitter
+          fan_on: true
+          fan_exhaust: true
+          fan_speed: 10
+          cover_open: true
+          #auto_mode: false
+          #auto_temperature: 78
+          #special: false
+          #warn: false
 ```
 
-### Example code
-
-See also [maxxfan-example.yaml](maxxfan-example.yaml) as a starting point for your configuration.
+See [maxxfan-transmitter-example.yaml](maxxfan-transmitter-example.yaml) for a complete example with a simple web-based user interface that acts as a remote control for the Maxxfan and shows how to use ESPHome template entities to track the state of the device.
 
 ## Protocol details
 
