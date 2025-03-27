@@ -46,8 +46,6 @@ See [maxxfan-receiver-example.yaml](maxxfan-receiver-example.yaml) for a complet
 
 ### Transmitting Maxxfan remote control messages
 
-*Note: The transmitter implementation is currently a work in progress and needs further testing.*
-
 The `remote_transmitter.transmit_maxxfan` action transmits a message to the fan and sets all parameters at once.  Any parameters that you don't specify in the action will be set to their default values.  All parameters are templatable.
 
 | Parameter        | Value                                                                         | Default |
