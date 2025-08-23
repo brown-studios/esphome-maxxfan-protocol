@@ -55,7 +55,7 @@ The `remote_transmitter.transmit_maxxfan` action transmits a message to the fan 
 | fan_exhaust      | Fan direction: `true` for exhaust, `false` for intake                         | `false` |
 | cover_open       | Cover state: `true` for open, `false` for close                               | `false` |
 | auto_mode        | Mode: `true` for automatic mode (thermostat control), `false` for manual mode | `false` |
-| auto_temperature | Thermostat setpoint in Fahrenheight: range 29 to 99                           | `78`    |
+| auto_temperature | Thermostat setpoint in Fahrenheit: range 29 to 99                           | `78`    |
 | special          | Special modes: see [protocol details](#protocol-details)                      | `false` |
 | warn             | Emit warning tone: `true` to beep twice, `false` to not beep                  | `false` |
 
