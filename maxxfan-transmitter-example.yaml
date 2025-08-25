@@ -30,7 +30,7 @@ web_server:
 # Import the maxxfan protocol component.
 external_components:
   # Import the component from Github.
-  # - source: github://j9brown/esphome-maxxfan-protocol@main
+  # - source: github://brown-studios/esphome-maxxfan-protocol@main
   #   components: [ maxxfan_protocol ]
   # Import the component from a local directory.
   - source: components
