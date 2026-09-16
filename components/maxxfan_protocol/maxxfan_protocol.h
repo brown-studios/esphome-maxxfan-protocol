@@ -25,9 +25,15 @@ struct MaxxfanData {
 
 class MaxxfanProtocol : public RemoteProtocol<MaxxfanData> {
  public:
+#if ESPHOME_VERSION_CODE >= VERSION_CODE(2026, 10, 0)
+  void encode(RemoteTransmitData *dst, const MaxxfanData &data);
+  optional<MaxxfanData> decode(RemoteReceiveData src);
+  void dump(const MaxxfanData &data);
+#else
   void encode(RemoteTransmitData *dst, const MaxxfanData &data) override;
   optional<MaxxfanData> decode(RemoteReceiveData src) override;
   void dump(const MaxxfanData &data) override;
+#endif
 };
 
 DECLARE_REMOTE_PROTOCOL(Maxxfan)
